@@ -11,9 +11,10 @@ from .app import app
 import os
 import webbrowser
 from config import __project_github__, __user_guide_fr__
-from dashboard.tabs import create_tab
+from dashboard.tabs import Onglet
 from dash.exceptions import PreventUpdate
 from dashboard.upload import tk_file_dialog
+from dataclasses import dataclass, asdict
 
 ############################
 ####### MENU Fichier #######
@@ -100,10 +101,16 @@ def add_tab_click(n_clicks, current_tabs):
     new_label = f"Onglet {tab_count+1}"
 
     # Créer le nouvel onglet via votre fonction factory
-    new_tab = create_tab(new_tab_id, new_label)
+    new_tab = Onglet(new_tab_id, new_label)
     
     # Ajouter le nouvel onglet à la liste existante
-    current_tabs.append(new_tab)
+    current_tabs += asdict(new_tab)
+    print("new_tab : ")
+    print(asdict(new_tab))
+    print("current_tabs : ")
+    print(current_tabs)
+    print(current_tabs[0].label)
+    print()
     return current_tabs
 
 
@@ -138,7 +145,9 @@ def manage_tabs(tabs, tab_selector, prev_clicks, next_clicks, name_update_click,
     
     if not tabs:  # Aucun onglet disponible
         return [], None, True, True, html.Div("Aucun onglet disponible.", style={"color": "red", "font-weight": "bold"}), 0, None
-
+    print("tabs :")
+    print(tabs)
+    print()
     ctx = dash.callback_context
     if ctx.triggered:
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
@@ -147,18 +156,20 @@ def manage_tabs(tabs, tab_selector, prev_clicks, next_clicks, name_update_click,
         elif button_id == "next-tab" and tab_index < len(tabs) - 1:
             tab_index += 1
         elif get_button_id_from_json(button_id, "type") == "update-tab-name-button":
-            tabs[tab_index]["label"] = new_tab_name[0]
+            tabs[tab_index].label = new_tab_name[0]
         elif tab_selector != f"tab-{tab_index+1}" and len(tabs) > 1:
             test = False
             tab_index = 0
             for tab in tabs :
-                if tab["value"] != tab_selector and test == False:
+                if tab.value != tab_selector and test == False:
                     tab_index += 1
                 else:
                     test = True
-    options = [{"label": tab["label"], "value": tab["value"]} for tab in tabs]
-    selected_value = tabs[tab_index]["value"]
-    selected_content = html.Div(tabs[tab_index]["content"])
+    print("tab av options : ")
+    print(tab)
+    options = [{"label": tab.label, "value": tab.value} for tab in tabs]
+    selected_value = tabs[tab_index].value
+    selected_content = html.Div(tabs[tab_index].content)
 
     return options, selected_value, tab_index == 0, tab_index == len(tabs) - 1, selected_content, tab_index, tabs
 
