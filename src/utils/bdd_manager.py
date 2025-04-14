@@ -82,6 +82,7 @@ def ajouter_onglet(nom):
     onglet = Onglet(nom=nom)
     session.add(onglet)
     session.commit()
+
     return onglet
 
 def supprimer_onglet(onglet_id):
@@ -92,12 +93,12 @@ def supprimer_onglet(onglet_id):
 
 def lire_all_onglets():
     onglets = session.query(Onglet).all()
-    for o in onglets:
-        print(f"Onglet {o.id} : {o.nom}")
+
     return onglets
 
 def lire_onglet(onglet_id):
     onglet = session.query(Onglet).get(onglet_id)
+    
     return onglet
 
 ############################# File #############################
@@ -117,8 +118,7 @@ def supprimer_file(file_id):
 
 def lire_all_files():
     fichiers = session.query(File).all()
-    for f in fichiers:
-        print(f"File {f.id} : {f.nom}, Path: {f.path}, Dernière modif: {f.last_modif}")
+
     return fichiers
 
 ############################# Type grandeur #############################
@@ -126,6 +126,7 @@ def ajouter_type_grandeur(nom):
     type_g = Type_Grandeur(nom=nom)
     session.add(type_g)
     session.commit()
+
     return type_g
 
 def supprimer_type_grandeur(nom):
@@ -136,8 +137,7 @@ def supprimer_type_grandeur(nom):
 
 def lire_all_types_grandeur():
     types = session.query(Type_Grandeur).all()
-    for t in types:
-        print(f"Type de Grandeur : {t.nom}")
+
     return types
 
 ############################# Grandeur #############################
@@ -155,20 +155,7 @@ def supprimer_grandeur(grandeur_id):
 
 def lire_all_grandeurs():
     grandeurs = session.query(Grandeur).all()
-    for g in grandeurs:
-        print(f"Grandeur {g.id} | Type: {g.nom_typeGrandeur} | Fichier ID: {g.id_file} | Fréquence: {g.frequence}")
-    return grandeurs
 
-def lire_grandeur(nom_type_grandeur, num_page, nombre):
-    """
-    Récupère un nombre de grandeurs pour un type donné, à partir d'un index donné (pagination).
-    """
-    query = session.query(Grandeur).filter_by(nom_typeGrandeur=nom_type_grandeur)
-    grandeurs = query.offset(num_page * nombre).limit(nombre).all()
-    
-    #for g in grandeurs:
-    #    print(f"[{g.id}] Paramètre: {g.parametre} | Fréquence: {g.frequence} | File ID: {g.id_file}")
-    
     return grandeurs
 
 ############################# Valuer Grandeur #############################
@@ -176,7 +163,6 @@ def ajouter_valeur_grandeur(id_grandeur, nom, valeur):
     v = Valeur_Grandeur(id_grandeur=id_grandeur, nom=nom, valeur=str(valeur))
     session.add(v)
     session.commit()
-    print(f"✅ Valeur '{nom}' = {valeur} ajoutée à grandeur {id_grandeur}.")
     return v
 
 def supprimer_valeur_grandeur(id_valeur):
@@ -185,16 +171,23 @@ def supprimer_valeur_grandeur(id_valeur):
         session.delete(v)
         session.commit()
 
-def lire_valeurs_grandeur(id_grandeur=None):
+def lire_all_valeurs_grandeur(id_grandeur=None):
     query = session.query(Valeur_Grandeur)
     if id_grandeur:
         query = query.filter_by(id_grandeur=id_grandeur)
 
     valeurs = query.all()
-    for v in valeurs:
-        print(f"[{v.id}] {v.nom} = {v.valeur} (grandeur {v.id_grandeur})")
     
     return valeurs
+
+def lire_valeur_grandeur(id_grandeur, num_page, nombre):
+    """
+    Récupère un nombre de valeur pour un type donné, à partir d'un index donné (pagination).
+    """
+    query = session.query(Valeur_Grandeur).filter_by(id_grandeur=id_grandeur)
+    grandeurs = query.offset(num_page * nombre).limit(nombre).all()
+    
+    return grandeurs
 
 ############################# Lien Onglet Grandeur #############################
 
@@ -213,7 +206,4 @@ def supprimer_lien_onglet_grandeur(id_onglet, id_grandeur):
 
 def lire_all_onglet_grandeurs():
     results = session.execute(Onglet_Grandeur.select()).fetchall()
-    for row in results:
-        print(f"Onglet ID: {row.id_onglet}, Grandeur ID: {row.id_grandeur}")
     return results
-
