@@ -53,19 +53,21 @@ class Grandeur(Base):
     id = Column(Integer, primary_key=True)
     nom_typeGrandeur = Column(String(100), ForeignKey("Type_Grandeur.nom"))
     id_file = Column(Integer, ForeignKey("File.id"))
-    
-    deemebeding = Column(String(100))
-    facePort = Column(String(100))
-    frequence = Column(BigInteger)
-    lineLength = Column(Integer)
-    lot = Column(Integer)
-    parametre = Column(String(100))
-    portWidth = Column(Integer)
-    data = Column(String(100))
 
     file = relationship("File", back_populates="grandeurs")
     type_grandeur = relationship("Type_Grandeur", back_populates="grandeurs")
     onglets = relationship("Onglet", secondary=Onglet_Grandeur, back_populates="grandeurs")
+    valeurs = relationship("Valeur_Grandeur", back_populates="grandeur")
+
+class Valeur_Grandeur(Base):
+    __tablename__ = "Valeur_Grandeur"
+    id = Column(Integer, primary_key=True)
+    nom = Column(String(100))          # nom de l'attribut (ex: "pression", "frequence")
+    valeur = Column(String(255))       # valeur enregistrée (toujours en string pour la flexibilité)
+    id_grandeur = Column(Integer, ForeignKey("Grandeur.id"))
+
+    grandeur = relationship("Grandeur", back_populates="valeurs")
+
 
 def create_database():
     # Création de la base si elle n'existe pas
@@ -88,11 +90,15 @@ def supprimer_onglet(onglet_id):
         session.delete(onglet)
         session.commit()
 
-def lire_onglets():
+def lire_all_onglets():
     onglets = session.query(Onglet).all()
     for o in onglets:
         print(f"Onglet {o.id} : {o.nom}")
     return onglets
+
+def lire_onglet(onglet_id):
+    onglet = session.query(Onglet).get(onglet_id)
+    return onglet
 
 ############################# File #############################
 def ajouter_file(nom, path, last_modif=None):
@@ -109,7 +115,7 @@ def supprimer_file(file_id):
         session.delete(fichier)
         session.commit()
 
-def lire_files():
+def lire_all_files():
     fichiers = session.query(File).all()
     for f in fichiers:
         print(f"File {f.id} : {f.nom}, Path: {f.path}, Dernière modif: {f.last_modif}")
@@ -128,7 +134,7 @@ def supprimer_type_grandeur(nom):
         session.delete(type_g)
         session.commit()
 
-def lire_types_grandeur():
+def lire_all_types_grandeur():
     types = session.query(Type_Grandeur).all()
     for t in types:
         print(f"Type de Grandeur : {t.nom}")
@@ -147,11 +153,48 @@ def supprimer_grandeur(grandeur_id):
         session.delete(grandeur)
         session.commit()
 
-def lire_grandeurs():
+def lire_all_grandeurs():
     grandeurs = session.query(Grandeur).all()
     for g in grandeurs:
         print(f"Grandeur {g.id} | Type: {g.nom_typeGrandeur} | Fichier ID: {g.id_file} | Fréquence: {g.frequence}")
     return grandeurs
+
+def lire_grandeur(nom_type_grandeur, num_page, nombre):
+    """
+    Récupère un nombre de grandeurs pour un type donné, à partir d'un index donné (pagination).
+    """
+    query = session.query(Grandeur).filter_by(nom_typeGrandeur=nom_type_grandeur)
+    grandeurs = query.offset(num_page * nombre).limit(nombre).all()
+    
+    #for g in grandeurs:
+    #    print(f"[{g.id}] Paramètre: {g.parametre} | Fréquence: {g.frequence} | File ID: {g.id_file}")
+    
+    return grandeurs
+
+############################# Valuer Grandeur #############################
+def ajouter_valeur_grandeur(id_grandeur, nom, valeur):
+    v = Valeur_Grandeur(id_grandeur=id_grandeur, nom=nom, valeur=str(valeur))
+    session.add(v)
+    session.commit()
+    print(f"✅ Valeur '{nom}' = {valeur} ajoutée à grandeur {id_grandeur}.")
+    return v
+
+def supprimer_valeur_grandeur(id_valeur):
+    v = session.query(Valeur_Grandeur).get(id_valeur)
+    if v:
+        session.delete(v)
+        session.commit()
+
+def lire_valeurs_grandeur(id_grandeur=None):
+    query = session.query(Valeur_Grandeur)
+    if id_grandeur:
+        query = query.filter_by(id_grandeur=id_grandeur)
+
+    valeurs = query.all()
+    for v in valeurs:
+        print(f"[{v.id}] {v.nom} = {v.valeur} (grandeur {v.id_grandeur})")
+    
+    return valeurs
 
 ############################# Lien Onglet Grandeur #############################
 
@@ -168,7 +211,7 @@ def supprimer_lien_onglet_grandeur(id_onglet, id_grandeur):
     )
     session.commit()
 
-def lire_onglet_grandeurs():
+def lire_all_onglet_grandeurs():
     results = session.execute(Onglet_Grandeur.select()).fetchall()
     for row in results:
         print(f"Onglet ID: {row.id_onglet}, Grandeur ID: {row.id_grandeur}")
