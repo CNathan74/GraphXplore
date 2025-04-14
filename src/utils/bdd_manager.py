@@ -2,6 +2,7 @@ from sqlalchemy import (
     create_engine, Column, Integer, String, ForeignKey, BigInteger, DateTime, Table
 )
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker
+from datetime import datetime
 import os
 
 # Chemin de la base SQLite locale
@@ -13,6 +14,9 @@ db_exists = os.path.exists(DB_FILENAME)
 # Création de l'engine
 engine = create_engine(f"sqlite:///{DB_FILENAME}", echo=True)
 Base = declarative_base()
+
+Session = sessionmaker(bind=engine)
+session = Session()
 
 # Tables associatives
 Onglet_Grandeur = Table(
@@ -70,3 +74,103 @@ def create_database():
         print("Base de données créée.")
     else:
         print("Base de données trouvée.")
+
+############################# Onglet #############################
+def ajouter_onglet(nom):
+    onglet = Onglet(nom=nom)
+    session.add(onglet)
+    session.commit()
+    return onglet
+
+def supprimer_onglet(onglet_id):
+    onglet = session.query(Onglet).get(onglet_id)
+    if onglet:
+        session.delete(onglet)
+        session.commit()
+
+def lire_onglets():
+    onglets = session.query(Onglet).all()
+    for o in onglets:
+        print(f"Onglet {o.id} : {o.nom}")
+    return onglets
+
+############################# File #############################
+def ajouter_file(nom, path, last_modif=None):
+    if last_modif is None:
+        last_modif = datetime.now()
+    fichier = File(nom=nom, path=path, last_modif=last_modif)
+    session.add(fichier)
+    session.commit()
+    return fichier
+
+def supprimer_file(file_id):
+    fichier = session.query(File).get(file_id)
+    if fichier:
+        session.delete(fichier)
+        session.commit()
+
+def lire_files():
+    fichiers = session.query(File).all()
+    for f in fichiers:
+        print(f"File {f.id} : {f.nom}, Path: {f.path}, Dernière modif: {f.last_modif}")
+    return fichiers
+
+############################# Type grandeur #############################
+def ajouter_type_grandeur(nom):
+    type_g = Type_Grandeur(nom=nom)
+    session.add(type_g)
+    session.commit()
+    return type_g
+
+def supprimer_type_grandeur(nom):
+    type_g = session.query(Type_Grandeur).get(nom)
+    if type_g:
+        session.delete(type_g)
+        session.commit()
+
+def lire_types_grandeur():
+    types = session.query(Type_Grandeur).all()
+    for t in types:
+        print(f"Type de Grandeur : {t.nom}")
+    return types
+
+############################# Grandeur #############################
+def ajouter_grandeur(nom_typeGrandeur, id_file, **kwargs):
+    grandeur = Grandeur(nom_typeGrandeur=nom_typeGrandeur, id_file=id_file, **kwargs)
+    session.add(grandeur)
+    session.commit()
+    return grandeur
+
+def supprimer_grandeur(grandeur_id):
+    grandeur = session.query(Grandeur).get(grandeur_id)
+    if grandeur:
+        session.delete(grandeur)
+        session.commit()
+
+def lire_grandeurs():
+    grandeurs = session.query(Grandeur).all()
+    for g in grandeurs:
+        print(f"Grandeur {g.id} | Type: {g.nom_typeGrandeur} | Fichier ID: {g.id_file} | Fréquence: {g.frequence}")
+    return grandeurs
+
+############################# Lien Onglet Grandeur #############################
+
+def lier_onglet_grandeur(id_onglet, id_grandeur):
+    session.execute(Onglet_Grandeur.insert().values(id_onglet=id_onglet, id_grandeur=id_grandeur))
+    session.commit()
+
+def supprimer_lien_onglet_grandeur(id_onglet, id_grandeur):
+    session.execute(
+        Onglet_Grandeur.delete().where(
+            (Onglet_Grandeur.c.id_onglet == id_onglet) & 
+            (Onglet_Grandeur.c.id_grandeur == id_grandeur)
+        )
+    )
+    session.commit()
+
+def lire_onglet_grandeurs():
+    results = session.execute(Onglet_Grandeur.select()).fetchall()
+    for row in results:
+        print(f"Onglet ID: {row.id_onglet}, Grandeur ID: {row.id_grandeur}")
+    return results
+
