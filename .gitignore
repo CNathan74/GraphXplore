@@ -3,3 +3,5 @@ virtual_env/venv/
 # Exclure les dossiers __pycache__
 **/__pycache__/
 **/*.pyc
+# Exclure la base de données
+grandeurs.db

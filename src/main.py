@@ -5,6 +5,7 @@ import webview
 from dashboard.app import app
 from dashboard.layout import layout
 from utils.temp_dir import create_temp_dir, clear_temp_dir
+from utils.bdd_manager import create_database
 
 # Importer les callbacks pour les enregistrer
 import dashboard.callbacks
@@ -26,6 +27,7 @@ def on_closing_mainwindow():
 
 if __name__ == '__main__':
     create_temp_dir()
+    create_database()
     # Démarrer Dash dans un thread séparé en tant que daemon
     dash_thread = threading.Thread(target=run_mainwindow, daemon=True)
     dash_thread.start()
